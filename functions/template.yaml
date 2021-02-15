@@ -15,7 +15,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: dist/
-      Handler: hello.lambdaHandler
+      Handler: hello-world.lambdaHandler
       Runtime: nodejs14.x
       Events:
         HelloWorld:
