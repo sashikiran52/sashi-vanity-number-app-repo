@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 import { Phone } from '../models';
-import * as words from 'an-array-of-english-words';
+
+var words = require('an-array-of-english-words'); // this library requires javascript-style import
 
 export const handler = async (event: APIGatewayProxyEvent, context: Context) => {
     try {
@@ -15,7 +16,8 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context) => 
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: processedNumber,
+                number: processedNumber,
+                vanityList
             }),
         };
     } catch (err) {
@@ -58,7 +60,7 @@ const generateVanityNumbers = (number: string): string[] => {
     let firstSix = number.slice(0,6);
     let lastFour = number.slice(6).split('');
 
-    let vanityList: string[];
+    let vanityList: string[] = [];
     
     const dialPadMap = new Map([
         ["0","0"],
@@ -84,24 +86,24 @@ const generateVanityNumbers = (number: string): string[] => {
     */
     for (let i = 0; i < spotOneStr.length; i++) {
         
-        if (vanityList.length > 10) { // list already contains 5 words
+        if (vanityList.length >= 10) { // list already contains 5 words
             break;
         }
 
         for (let j = 0; j < spotTwoStr.length; j++) {
             
-            if (vanityList.length > 10) { // list already contains 5 words
+            if (vanityList.length >= 10) { // list already contains 5 words
                 break;
             }
 
             for (let k = 0; k < spotThreeStr.length; k++) {
                 
-                if (vanityList.length > 10) { // list already contains 5 words
+                if (vanityList.length >= 10) { // list already contains 5 words
                     break;
                 }
 
                 for (let m = 0; m < spotFourStr.length; m++) {
-                    if (vanityList.length > 10) { // list already contains 5 words
+                    if (vanityList.length >= 10) { // list already contains 5 words
                         break;
                     }
                     
@@ -111,7 +113,7 @@ const generateVanityNumbers = (number: string): string[] => {
                         vanityList.push(vanityNumber);
                     }
 
-                    else if(words.includes(phoneWord)) { // will add up to the first five matches in the dictionary
+                    else if(words.includes(phoneWord.toLowerCase())) { // will add up to the first five matches in the dictionary
                         vanityList.push(vanityNumber);
                     }
                 }
