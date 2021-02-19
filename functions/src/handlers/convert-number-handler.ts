@@ -1,9 +1,15 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import * as AWS from 'aws-sdk';
 import { Phone } from '../models';
 
 var words = require('an-array-of-english-words'); // this library requires javascript-style import
 
 export const handler = async (event: APIGatewayProxyEvent, context: Context) => {
+
+    AWS.config.update({region: "us-east-1"});
+
+    const dynamoClient = new AWS.DynamoDB.DocumentClient();
+
     try {
         const phone = JSON.parse(event.body) as Phone;
 
@@ -12,12 +18,24 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context) => 
         const processedNumber = processNumber(phone);
 
         let vanityList = generateVanityNumbers(processedNumber);
+
+        const params: any = {
+            TableName: "VANITY_NUMBERS",
+            Item: {
+                phone_number: processedNumber, // modify with each invoke so the id does not repeat
+                vanity_numbers: vanityList // modify content here
+            },
+            ConditionExpression: 'attribute_not_exists(phone_number)', // do not overwrite existing entries
+            ReturnConsumedCapacity: 'TOTAL'
+        };
         
+        await dynamoClient.put(params).promise();
+
         return {
             statusCode: 200,
             body: JSON.stringify({
                 number: processedNumber,
-                vanityList
+                "vanity numbers": vanityList
             }),
         };
     } catch (err) {
@@ -40,7 +58,7 @@ const validateNumber = (phone : Phone): void => {
     // This expression matches valid, ten digit US phone numbers
     const validPhoneNumber: RegExp = /^(\+1|1)?\d{10}$/;
 
-    if (phone.number == null) {
+    if (!phone.number) {
         throw Error("Phone number was null or undefined.");
     }
 
