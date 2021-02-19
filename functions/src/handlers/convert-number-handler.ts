@@ -1,21 +1,18 @@
-import { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import { ConnectContactFlowEvent, ConnectContactFlowCallback, Context, ConnectContactFlowResult } from 'aws-lambda';
 import * as AWS from 'aws-sdk';
-import { Phone } from '../models';
 
 var words = require('an-array-of-english-words'); // this library requires javascript-style import
 
-export const handler = async (event: APIGatewayProxyEvent, context: Context) => {
+export const handler = async (event: ConnectContactFlowEvent, context: Context, callback: ConnectContactFlowCallback ) => {
 
     AWS.config.update({region: "us-east-1"});
 
     const dynamoClient = new AWS.DynamoDB.DocumentClient();
 
     try {
-        const phone = JSON.parse(event.body) as Phone;
+        const number = event['Details']['ContactData']['CustomerEndpoint']['Address'];
 
-        validateNumber(phone);
-
-        const processedNumber = processNumber(phone);
+        const processedNumber = validateNumber(number);
 
         let vanityList = generateVanityNumbers(processedNumber);
 
@@ -31,21 +28,18 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context) => 
         
         await dynamoClient.put(params).promise();
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                number: processedNumber,
-                "vanity numbers": vanityList
-            }),
-        };
+        let result: ConnectContactFlowResult;
+
+        let finalVanityList = vanityList.slice(-3); // taking the last three (or fewer) elements of the array
+
+        for (let i = 0; i < finalVanityList.length; i++) {
+            result["number" + i] = finalVanityList[i];
+        }
+
+        callback(null, result);
     } catch (err) {
         console.log(err);
-        return {
-            statusCode: 400,
-            body: JSON.stringify({
-                message: "Bad Request",
-            }),
-        };
+        callback(err);
     }
 }
 
@@ -54,24 +48,26 @@ export const handler = async (event: APIGatewayProxyEvent, context: Context) => 
  * validates phone number
  * @param phone 
  */
-const validateNumber = (phone : Phone): void => {
+const validateNumber = (number : string): string => {
     // This expression matches valid, ten digit US phone numbers
     const validPhoneNumber: RegExp = /^(\+1|1)?\d{10}$/;
 
-    if (!phone.number) {
+    if (number) {
         throw Error("Phone number was null or undefined.");
     }
 
-    if (!phone.number.match(validPhoneNumber)) {
+    if (!number.match(validPhoneNumber)) {
         throw Error("Invalid phone number.");
     }
+
+    return processNumber(number);
 }
 
-const processNumber = (phone: Phone): string => {
+const processNumber = (number: string): string => {
     const validPhoneNumber: RegExp = /^(\+1|1)?(\d{10})$/;
     
     // Strips country code if applicable
-    return phone.number.replace(validPhoneNumber, '$2')
+    return number.replace(validPhoneNumber, '$2')
 }
 
 const generateVanityNumbers = (number: string): string[] => {
