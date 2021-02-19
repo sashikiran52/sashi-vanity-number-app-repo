@@ -52,7 +52,7 @@ const validateNumber = (number : string): string => {
     // This expression matches valid, ten digit US phone numbers
     const validPhoneNumber: RegExp = /^(\+1|1)?\d{10}$/;
 
-    if (number) {
+    if (!number) {
         throw Error("Phone number was null or undefined.");
     }
 
