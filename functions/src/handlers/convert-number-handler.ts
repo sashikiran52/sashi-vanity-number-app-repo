@@ -9,7 +9,8 @@ export const handler = async (
     context: Context,
     callback: ConnectContactFlowCallback,
 ) => {
-    AWS.config.update({ region: 'us-east-1' });
+    
+    AWS.config.update({ region: process.env.AWS_REGION });
 
     const dynamoClient = new AWS.DynamoDB.DocumentClient();
 
@@ -145,6 +146,7 @@ const generateVanityNumbers = async (number: string, dynamoClient: DynamoDB.Docu
 
     vanityList = vanityList.slice(-5); //only consider the last 5 (or fewer) elements added
 
+    console.log('Generated vanity numbers! Saving to db: ' + vanityList);
     await save(number, vanityList, dynamoClient);
 
     return vanityList;
@@ -166,6 +168,7 @@ const checkNumber = async (number: string, dynamoClient: DynamoDB.DocumentClient
     const result = await dynamoClient.get(params).promise();
 
     try {
+        console.log('Found vanity numbers in db: ' + result.Item['vanity_numbers']);
         return result.Item['vanity_numbers'];
     } catch (err) {
         return null; //returns null if no vanity_numbers attribute exists
@@ -175,7 +178,7 @@ const checkNumber = async (number: string, dynamoClient: DynamoDB.DocumentClient
 /**
  * Saves an item to the Dynamo table
  *
- * @param number phone number
+ * @param number
  * @param vanityList generated vanity list
  * @param dynamoClient client to save items to Dynamo table
  */
@@ -186,7 +189,7 @@ const save = async (number: string, vanityList: string[], dynamoClient: DynamoDB
             phone_number: number,
             vanity_numbers: vanityList,
         },
-        ConditionExpression: 'attribute_not_exists(phone_number)', // do not overwrite existing entries
+        ConditionExpression: 'attribute_not_exists(phone_number)', // do not overwrite existing entries, but shouldn't trigger since checkNumber() handles this
         ReturnConsumedCapacity: 'TOTAL',
     };
 
