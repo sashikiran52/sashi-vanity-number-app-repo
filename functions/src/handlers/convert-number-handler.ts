@@ -9,7 +9,6 @@ export const handler = async (
     context: Context,
     callback: ConnectContactFlowCallback,
 ) => {
-    
     AWS.config.update({ region: process.env.AWS_REGION });
 
     const dynamoClient = new AWS.DynamoDB.DocumentClient();
