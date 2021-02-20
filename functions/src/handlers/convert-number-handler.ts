@@ -1,5 +1,6 @@
 import { ConnectContactFlowEvent, ConnectContactFlowCallback, Context, ConnectContactFlowResult } from 'aws-lambda';
 import * as AWS from 'aws-sdk';
+import { DynamoDB } from 'aws-sdk';
 
 var words = require('an-array-of-english-words'); // this library requires javascript-style import
 
@@ -10,27 +11,15 @@ export const handler = async (event: ConnectContactFlowEvent, context: Context, 
     const dynamoClient = new AWS.DynamoDB.DocumentClient();
 
     try {
-        const number = event['Details']['ContactData']['CustomerEndpoint']['Address'];
+        const number = event['Details']['ContactData']['CustomerEndpoint']['Address']; // getting phone number passed by Connect
 
-        const processedNumber = validateNumber(number);
+        const processedNumber = validateNumber(number, dynamoClient);
 
-        let vanityList = generateVanityNumbers(processedNumber);
-
-        const params: any = {
-            TableName: "VANITY_NUMBERS",
-            Item: {
-                phone_number: processedNumber, // modify with each invoke so the id does not repeat
-                vanity_numbers: vanityList // modify content here
-            },
-            ConditionExpression: 'attribute_not_exists(phone_number)', // do not overwrite existing entries
-            ReturnConsumedCapacity: 'TOTAL'
-        };
-        
-        await dynamoClient.put(params).promise();
+        let vanityList = await generateVanityNumbers(processedNumber, dynamoClient);
 
         let result: ConnectContactFlowResult = {};
 
-        let finalVanityList = vanityList.slice(-3); // taking the last three (or fewer) elements of the array
+        let finalVanityList = vanityList.slice(-3); // taking the last three (or fewer) elements of the array to return to Connect
 
         for (let i = 0; i < finalVanityList.length; i++) {
             result["number" + i] = finalVanityList[i].replace(/(.)/g, "$&, ");
@@ -48,7 +37,7 @@ export const handler = async (event: ConnectContactFlowEvent, context: Context, 
  * validates phone number
  * @param phone 
  */
-const validateNumber = (number : string): string => {
+const validateNumber = (number : string, dynamoClient: DynamoDB.DocumentClient): string => {
     // This expression matches valid, ten digit US phone numbers
     const validPhoneNumber: RegExp = /^(\+1|1)?\d{10}$/;
 
@@ -63,6 +52,10 @@ const validateNumber = (number : string): string => {
     return processNumber(number);
 }
 
+/**
+ * Strips country code if applicable
+ * @param number 
+ */
 const processNumber = (number: string): string => {
     const validPhoneNumber: RegExp = /^(\+1|1)?(\d{10})$/;
     
@@ -70,11 +63,23 @@ const processNumber = (number: string): string => {
     return number.replace(validPhoneNumber, '$2')
 }
 
-const generateVanityNumbers = (number: string): string[] => {
+/**
+ * Checks if vanity list already exists. If so, returns it. If not, generates a vanity list.
+ * @param number 
+ * @param dynamoClient 
+ */
+const generateVanityNumbers = async (number: string, dynamoClient: DynamoDB.DocumentClient): Promise<string[]> => {
+    
+    var vanityList: string[] = await checkNumber(number, dynamoClient);
+
+    if (vanityList) { //if the vanityList is already in the database, return it
+        return vanityList;
+    }
+
+    vanityList = [];
+
     let firstSix = number.slice(0,6);
     let lastFour = number.slice(6).split('');
-
-    let vanityList: string[] = [];
     
     const dialPadMap = new Map([
         ["0","0"],
@@ -136,10 +141,54 @@ const generateVanityNumbers = (number: string): string[] => {
         }
     }
 
-    if (vanityList.length <= 5) {
-        return vanityList;
-    }
+    vanityList = vanityList.slice(-5); //only consider the last 5 (or fewer) elements added
     
-    return vanityList.slice(vanityList.length - 5); // return the most elements matching from the dictionary
+    await save(number, vanityList, dynamoClient);
+    
+    return vanityList;
 
+}
+
+/**
+ * Checks if the number already exists in the Dynamo 
+ * @param number 
+ * @param dynamoClient 
+ */
+const checkNumber = async (number:string, dynamoClient: DynamoDB.DocumentClient): Promise<string[]> => {
+    var params = {
+        TableName: "VANITY_NUMBERS",
+        Key: {
+            phone_number: number 
+        },
+    }
+
+    const result = await dynamoClient.get(params).promise();
+
+    try {
+        return result.Item["vanity_numbers"];
+    } catch (err) {
+        return null; //returns null if no vanity_numbers attribute exists
+    }
+}
+
+/**
+ * Saves an item to the Dynamo table
+ * 
+ * @param number phone number
+ * @param vanityList generated vanity list
+ * @param dynamoClient client to save items to Dynamo table
+ */
+const save = async (number: string, vanityList: string[], dynamoClient: DynamoDB.DocumentClient) => {
+
+    const params: any = {
+        TableName: "VANITY_NUMBERS",
+        Item: {
+            phone_number: number, 
+            vanity_numbers: vanityList
+        },
+        ConditionExpression: 'attribute_not_exists(phone_number)', // do not overwrite existing entries
+        ReturnConsumedCapacity: 'TOTAL'
+    };
+    
+    await dynamoClient.put(params).promise();
 }
