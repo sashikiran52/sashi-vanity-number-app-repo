@@ -28,12 +28,12 @@ export const handler = async (event: ConnectContactFlowEvent, context: Context, 
         
         await dynamoClient.put(params).promise();
 
-        let result: ConnectContactFlowResult;
+        let result: ConnectContactFlowResult = {};
 
         let finalVanityList = vanityList.slice(-3); // taking the last three (or fewer) elements of the array
 
         for (let i = 0; i < finalVanityList.length; i++) {
-            result["number" + i] = finalVanityList[i];
+            result["number" + i] = finalVanityList[i].replace(/(.)/g, "$&, ");
         }
 
         callback(null, result);
