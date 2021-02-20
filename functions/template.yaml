@@ -8,6 +8,7 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
+    Runtime: nodejs14.x
     Timeout: 3
 
 Resources:    
@@ -16,7 +17,6 @@ Resources:
       Properties:
         CodeUri: dist/
         Handler: convert-number.handler
-        Runtime: nodejs14.x
         Policies: AmazonDynamoDBFullAccess
 
   DynamoDBTable:
