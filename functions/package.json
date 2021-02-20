@@ -10,7 +10,6 @@
     "clean": "rimraf dist",
     "test": "mocha -r ts-node/register 'src/tests/unit/*.spec.ts'",
     "lint": "eslint --ext .ts .",
-    "local-deploy": "sam local start-api",
     "deploy": "sam deploy --guided"
   },
   "devDependencies": {
