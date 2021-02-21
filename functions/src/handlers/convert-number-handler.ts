@@ -107,10 +107,6 @@ const generateVanityNumbers = async (number: string, dynamoClient: DynamoDB.Docu
     const spotThreeStr = dialPadMap.get(lastFour[2]).split('');
     const spotFourStr = dialPadMap.get(lastFour[3]).split('');
 
-    /*
-        Please let the record show that I am not very happy about the nesting on these for loops. 
-        There is probably a more elegant solution with recursion.
-    */
     for (let i = 0; i < spotOneStr.length; i++) {
         if (vanityList.length >= 10) {
             // list already contains 5 words
