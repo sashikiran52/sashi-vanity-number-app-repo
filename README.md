@@ -1,6 +1,6 @@
 # vanity-number-app
 
-This project is a Node.js/Typescript Lambda Function that integrates with Amazon Connect to convert a caller's phone number into vanity number possibilities. It considers the last four digits of the phone number that is passed by Connect as a ConnectCallFlowEvent and converts them to letters based on dial pad options. Each option is checked against a word library of 100,000 common English words. Up to five matches will be returned. If there are fewer than five matches, the function will pad the choices with the first several options it considered. The five matches are stored in a DynamoDB table, and then three of those are returned to the Amazon call flow to be read back to the user.
+This project is a Node.js/Typescript Lambda Function that integrates with Amazon Connect to convert a caller's U.S. phone number into vanity number possibilities. It considers the last four digits of the phone number that is passed by Connect as a ConnectCallFlowEvent and converts them to letters based on dial pad options. Each option is checked against a word library of 100,000 common English words. Up to five matches will be returned. If there are fewer than five matches, the function will pad the choices with the first several options it considered. The five matches are stored in a DynamoDB table, and then three of those are returned to the Amazon call flow to be read back to the user.
 
 ## Install dependencies
 
