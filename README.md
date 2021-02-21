@@ -1,120 +1,65 @@
 # vanity-number-app
 
-This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
+This project is a Node.js/Typescript Lambda function that integrates with Amazon Connect to convert a caller's phone number into vanity number possibilities. It considers the last four digits of the phone number that is passed by Connect as a ConnectCallFlowEvent and converts them to letters based on dial pad options. Each option is checked against a word library of 100,000 common English words. Up to five matches will be returned. If there are fewer than five matches, the function will pad the choices with the first several options it considered. The five matches are stored in a DynamoDB table, and then three of those are returned to the Amazon call flow to be read back to the user.
 
-- hello-world - Code for the application's Lambda function.
-- events - Invocation events that you can use to invoke the function.
-- hello-world/tests - Unit tests for the application code. 
-- template.yaml - A template that defines the application's AWS resources.
+## Install dependencies
 
-The application uses several AWS resources, including Lambda functions and an API Gateway API. These resources are defined in the `template.yaml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
-
-If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.  
-The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds a simplified step-through debugging experience for Lambda function code. See the following links to get started.
-
-* [PyCharm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
-* [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
-
-## Deploy the sample application
-
-The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
-
-To use the SAM CLI, you need the following tools.
-
-* SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-* Node.js - [Install Node.js 10](https://nodejs.org/en/), including the NPM package management tool.
-* Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
-
-To build and deploy your application for the first time, run the following in your shell:
+Change directories to `./functions` and run
 
 ```bash
-sam build
-sam deploy --guided
+vanity-number-app/functions$ npm i
 ```
 
-The first command will build the source of your application. The second command will package and deploy your application to AWS, with a series of prompts:
-
-* **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
-* **AWS Region**: The AWS region you want to deploy your app to.
-* **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
-* **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modified IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
-* **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
-
-You can find your API Gateway Endpoint URL in the output values displayed after deployment.
-
-## Use the SAM CLI to build and test locally
-
-Build your application with the `sam build` command.
+## Build
+To build this application, run
 
 ```bash
-vanity-number-app$ sam build
+vanity-number-app/functions$ npm run build
 ```
+The application is cleaned with rimraf (to support Windows users) and then is built with webpack. Minified, production ready js files are built to dist.
 
-The SAM CLI installs dependencies defined in `hello-world/package.json`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
-
-Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
-
-Run functions locally and invoke them with the `sam local invoke` command.
+## Deploy
+You must build before deploying. To deploy the application, ensure your AWS CLI is configured to the AWS account you are trying to deploy to. Run
 
 ```bash
-vanity-number-app$ sam local invoke HelloWorldFunction --event events/event.json
+vanity-number-app/functions$ npm run deploy
 ```
+SAM (Serverless Application Model) will do a guided deployment, asking for input on several items. After the first time it runs, the options you selected will be default and saved in your `samconfig.toml` file. SAM creates a CloudFormation stack and deploys the application to your account. Outputs include the arns for the Lambda function as well as the generated implicit IAM Role.
 
-The SAM CLI can also emulate your application's API. Use the `sam local start-api` to run the API locally on port 3000.
-
-```bash
-vanity-number-app$ sam local start-api
-vanity-number-app$ curl http://localhost:3000/
-```
-
-The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
-
-```yaml
-      Events:
-        HelloWorld:
-          Type: Api
-          Properties:
-            Path: /hello
-            Method: get
-```
-
-## Add a resource to your application
-The application template uses AWS Serverless Application Model (AWS SAM) to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources such as functions, triggers, and APIs. For resources not included in [the SAM specification](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md), you can use standard [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) resource types.
-
-## Fetch, tail, and filter Lambda function logs
-
-To simplify troubleshooting, SAM CLI has a command called `sam logs`. `sam logs` lets you fetch logs generated by your deployed Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
-
-`NOTE`: This command works for all AWS Lambda functions; not just the ones you deploy using SAM.
-
-```bash
-vanity-number-app$ sam logs -n HelloWorldFunction --stack-name vanity-number-app --tail
-```
-
-You can find more information and examples about filtering Lambda function logs in the [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
+After deployment, to add the call flow to your Connect instance, navigate to the Amazon Connect console, click on your instance alias, click Contact flows, navigate down to AWS Lambda, select the Lamba Function deployed by this application, and add it. Then, change the `value` key on line 91 of the `VanityNumberFlow.json` in `./functions/src/connect-flow` to be the Convert Number Function ARN outputted by the CloudFormation stack when you deployed with SAM (e.g. `arn:aws:lambda:us-east-1:XXXXXXXXXXXX:function:vanity-number-app-ConvertNumberFunction-XXXXXXXXXXXX`). Login to your Amazon Connect instance, and under routing, go to "Contact Flows". Select "Create New Flow" and on the drop down menu next to save, select "Import flow". Save and publish the flow, then add it to one of your phone numbers from the "Phone numbers" menu under routing.
 
 ## Unit tests
 
-Tests are defined in the `hello-world/tests` folder in this project. Use NPM to install the [Mocha test framework](https://mochajs.org/) and run unit tests.
+Tests are defined in the `functions/src/tests` folder in this project. Run
 
 ```bash
-vanity-number-app$ cd hello-world
-hello-world$ npm install
-hello-world$ npm run test
+vanity-number-app/functions$ npm run test
 ```
+to run tests.
 
 ## Cleanup
 
-To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
+To delete the application, use the AWS CLI. Assuming you used the project name for the stack name, you can run the following:
 
 ```bash
 aws cloudformation delete-stack --stack-name vanity-number-app
 ```
+You can also delete the imported contact flow from the Contact Flows menu in your Connect instance.
 
-## Resources
+## Architecture diagram
 
-See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
+See the Architecture Diagram https://app.cloudcraft.co/view/537f7161-3d79-4d1c-b946-d2b84a539512?key=NZLmW7XOmgNYy8ackmdscA&embed=true for this application.
 
-Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
+## Lessons Learned
+
+Before having done this project, the bulk of my experience with Lambda Function deployments was using [serverless](https://www.serverless.com), which natively deploys Typescript. In contrast, SAM requires a JS file, so I needed to use Webpack to compile the Typescript code back to JavaScript before deployment.
+
+In a production environment, a stricter security policy should be used on the Lambda Function so it can only access the Dynamo tables it needs (instead of all of them).
+
+I would have preferred to write that function with recursion rather than nested for-loops. I don't think the recursion would have improved time complexity since each letter combination needs to be checked for word matches, but it may have looked prettier.
+
+The code could be modified to allow matching of the last seven or even all ten digits of the phone number. I only considered the last 4 digits of the phone number for the sake of simplicity. Another improvement that could be made is to use RegEx to use close matches of words or strings that contain other words. Solving this way could get very intricate.
+
+I had a really hard time trying to get the Amazon Connect text-to-speech module to correctly say the vanity number. I solved this by adding a comma and space in between every character in each vanity number returned to the Connect contact flow.
+
+For my unit tests, I used a package that helped me mock the Dynamo document client get and put. This allowed me to unit test the function even though it had integrations with Dynamo. I also mocked the ConnectContactFlowEvent to pass the phone number in during my tests.
