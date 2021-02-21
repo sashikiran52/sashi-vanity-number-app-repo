@@ -1,7 +1,9 @@
 const path = require('path');
 
 module.exports = {
-  entry: { 'hello-world': './src/handlers/hello-world.ts' },
+  entry: { 
+    'convert-number': './src/handlers/convert-number-handler.ts' 
+    },
   module: {
     rules: [
       {
@@ -20,4 +22,5 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
   },
   target: 'node',
+  mode: 'production'
 };
