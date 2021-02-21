@@ -29,9 +29,15 @@ export const handler = async (
         }
 
         callback(null, result);
+        let status = 'Success!';
+        console.log(status);
+        return status;
     } catch (err) {
+        let status = 'Failure!';
+        console.log(status);
         console.log(err);
         callback(err);
+        return status;
     }
 };
 
