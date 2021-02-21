@@ -1,6 +1,6 @@
 # vanity-number-app
 
-This project is a Node.js/Typescript Lambda function that integrates with Amazon Connect to convert a caller's phone number into vanity number possibilities. It considers the last four digits of the phone number that is passed by Connect as a ConnectCallFlowEvent and converts them to letters based on dial pad options. Each option is checked against a word library of 100,000 common English words. Up to five matches will be returned. If there are fewer than five matches, the function will pad the choices with the first several options it considered. The five matches are stored in a DynamoDB table, and then three of those are returned to the Amazon call flow to be read back to the user.
+This project is a Node.js/Typescript Lambda Function that integrates with Amazon Connect to convert a caller's phone number into vanity number possibilities. It considers the last four digits of the phone number that is passed by Connect as a ConnectCallFlowEvent and converts them to letters based on dial pad options. Each option is checked against a word library of 100,000 common English words. Up to five matches will be returned. If there are fewer than five matches, the function will pad the choices with the first several options it considered. The five matches are stored in a DynamoDB table, and then three of those are returned to the Amazon call flow to be read back to the user.
 
 ## Install dependencies
 
@@ -24,7 +24,7 @@ You must build before deploying. To deploy the application, ensure your AWS CLI 
 ```bash
 vanity-number-app/functions$ npm run deploy
 ```
-SAM (Serverless Application Model) will do a guided deployment, asking for input on several items. After the first time it runs, the options you selected will be default and saved in your `samconfig.toml` file. SAM creates a CloudFormation stack and deploys the application to your account. Outputs include the arns for the Lambda function as well as the generated implicit IAM Role.
+SAM (Serverless Application Model) will do a guided deployment, asking for input on several items. After the first time it runs, the options you selected will be default and saved in your `samconfig.toml` file. SAM creates a CloudFormation stack and deploys the application to your account. Outputs include the arns for the Lambda Function as well as the generated implicit IAM Role.
 
 After deployment, to add the call flow to your Connect instance, navigate to the Amazon Connect console, click on your instance alias, click Contact flows, navigate down to AWS Lambda, select the Lamba Function deployed by this application, and add it. Then, change the `value` key on line 91 of the `VanityNumberFlow.json` in `./functions/src/connect-flow` to be the Convert Number Function ARN outputted by the CloudFormation stack when you deployed with SAM (e.g. `arn:aws:lambda:us-east-1:XXXXXXXXXXXX:function:vanity-number-app-ConvertNumberFunction-XXXXXXXXXXXX`). Login to your Amazon Connect instance, and under routing, go to "Contact Flows". Select "Create New Flow" and on the drop down menu next to save, select "Import flow". Save and publish the flow, then add it to one of your phone numbers from the "Phone numbers" menu under routing.
 
@@ -60,6 +60,6 @@ I would have preferred to write that function with recursion rather than nested 
 
 The code could be modified to allow matching of the last seven or even all ten digits of the phone number. I only considered the last 4 digits of the phone number for the sake of simplicity. Another improvement that could be made is to use RegEx to use close matches of words or strings that contain other words. Solving this way could get very intricate.
 
-I had a really hard time trying to get the Amazon Connect text-to-speech module to correctly say the vanity number. I solved this by adding a comma and space in between every character in each vanity number returned to the Connect contact flow.
+I had a hard time trying to get the Amazon Connect text-to-speech module to correctly say the vanity number. I solved this by adding a comma and space in between every character in each vanity number returned to the Connect contact flow.
 
 For my unit tests, I used a package that helped me mock the Dynamo document client get and put. This allowed me to unit test the function even though it had integrations with Dynamo. I also mocked the ConnectContactFlowEvent to pass the phone number in during my tests.
