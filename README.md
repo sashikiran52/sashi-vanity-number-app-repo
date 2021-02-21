@@ -48,7 +48,7 @@ You can also delete the imported contact flow from the Contact Flows menu in you
 
 ## Architecture diagram
 
-See the Architecture Diagram https://app.cloudcraft.co/view/537f7161-3d79-4d1c-b946-d2b84a539512?key=NZLmW7XOmgNYy8ackmdscA&embed=true for this application.
+See the [Architecture Diagram](https://app.cloudcraft.co/view/537f7161-3d79-4d1c-b946-d2b84a539512?key=NZLmW7XOmgNYy8ackmdscA) for this application.
 
 ## Lessons Learned
 
