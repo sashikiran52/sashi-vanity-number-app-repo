@@ -16,21 +16,21 @@ To build this application, run
 ```bash
 vanity-number-app/functions$ npm run build
 ```
-The application is cleaned with rimraf (to support Windows users) and then is built with webpack. Minified, production ready js files are built to dist.
+The application is cleaned with rimraf (to support Windows users) and then is built with webpack. Minified, production-ready js files are built to `dist/`.
 
 ## Deploy
-You must build before deploying. To deploy the application, ensure your AWS CLI is configured to the AWS account you are trying to deploy to. Run
+You must build before deploying. To deploy the application, ensure your AWS CLI is configured to the AWS account you are trying to deploy to. Run:
 
 ```bash
 vanity-number-app/functions$ npm run deploy
 ```
-SAM (Serverless Application Model) will do a guided deployment, asking for input on several items. After the first time it runs, the options you selected will be default and saved in your `samconfig.toml` file. SAM creates a CloudFormation stack and deploys the application to your account. Outputs include the arns for the Lambda Function as well as the generated implicit IAM Role.
+SAM (Serverless Application Model) will do a guided deployment, asking for input on several items. After the first time it runs, the options you selected will be default and saved in your `samconfig.toml` file. SAM creates a CloudFormation stack and deploys the application to your account. Outputs include the ARNs for the Lambda Function as well as the generated implicit IAM Role.
 
-After deployment, to add the call flow to your Connect instance, navigate to the Amazon Connect console, click on your instance alias, click Contact flows, navigate down to AWS Lambda, select the Lamba Function deployed by this application, and add it. Then, change the `value` key on line 91 of the `VanityNumberFlow.json` in `./functions/src/connect-flow` to be the Convert Number Function ARN outputted by the CloudFormation stack when you deployed with SAM (e.g. `arn:aws:lambda:us-east-1:XXXXXXXXXXXX:function:vanity-number-app-ConvertNumberFunction-XXXXXXXXXXXX`). Login to your Amazon Connect instance, and under routing, go to "Contact Flows". Select "Create New Flow" and on the drop down menu next to save, select "Import flow". Save and publish the flow, then add it to one of your phone numbers from the "Phone numbers" menu under routing.
+After deployment, to add the call flow to your Connect instance, navigate to the Amazon Connect console, click on your instance alias, click "Contact flows", navigate down to AWS Lambda, select the Lamba Function deployed by this application, and add it. Then, change the `value` key on line 91 of the `VanityNumberFlow.json` in `./functions/src/flows` to be the Convert Number Function ARN outputted by the CloudFormation stack when you deployed with SAM (e.g. `arn:aws:lambda:us-east-1:XXXXXXXXXXXX:function:vanity-number-app-ConvertNumberFunction-XXXXXXXXXXXX`). Login to your Amazon Connect instance, and under routing, go to "Contact Flows". Select "Create New Flow" and on the drop down menu next to save, select "Import flow". Save and publish the flow, then add it to one of your phone numbers from the "Phone numbers" menu under routing.
 
 ## Unit tests
 
-Tests are defined in the `functions/src/tests` folder in this project. Run
+Tests are defined in the `functions/src/tests` folder in this project. Run:
 
 ```bash
 vanity-number-app/functions$ npm run test
@@ -50,9 +50,9 @@ You can also delete the imported contact flow from the Contact Flows menu in you
 
 See the [Architecture Diagram](https://app.cloudcraft.co/view/537f7161-3d79-4d1c-b946-d2b84a539512?key=NZLmW7XOmgNYy8ackmdscA) for this application.
 
-## Lessons Learned
+## About the development
 
-Before having done this project, the bulk of my experience with Lambda Function deployments was using [serverless](https://www.serverless.com), which natively deploys Typescript. In contrast, SAM requires a JS file, so I needed to use Webpack to compile the Typescript code back to JavaScript before deployment.
+Before having done this project, the bulk of my experience with Lambda Function deployments was using [serverless](https://www.serverless.com), which natively deploys Typescript. In contrast, SAM requires a JS file, so I needed to use webpack to compile the Typescript code back to JavaScript before deployment.
 
 In a production environment, a stricter security policy should be used on the Lambda Function so it can only access the Dynamo tables it needs (instead of all of them).
 
