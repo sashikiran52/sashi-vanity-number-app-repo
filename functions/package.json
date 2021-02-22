@@ -1,6 +1,6 @@
 {
   "name": "vanity_number_app",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Converts phone numbers to vanity numbers",
   "repository": "https://github.com/jcconklin/vanity-number-app",
   "author": "Coltrane Conklin",
